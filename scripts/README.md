@@ -9,13 +9,13 @@ Cada script demonstra uma estratégia diferente de geração de carga sobre uma 
 A partir da raiz do projeto:
 
 ```bash
-k6 run scripts/smoke.js
+k6 run scripts/workloads/smoke.js
 ```
 
 Utilizando variável de ambiente:
 
 ```bash
-k6 run -e BASE_URL=https://test.k6.io scripts/load.js
+k6 run -e BASE_URL=https://test.k6.io scripts/workloads/load.js
 ```
 
 Ou a flag `--env`.
@@ -63,7 +63,7 @@ Além da saída padrão no terminal, o k6 permite exportar as métricas para dif
 Salva todas as métricas em um arquivo JSON para posterior análise ou integração com outras ferramentas.
 
 ```bash
-k6 run --out json=results/result.json scripts/load.js
+k6 run --out json=../results/result.json scripts/workloads/load.js
 ```
 
 ---
@@ -78,13 +78,13 @@ As versões mais recentes do k6 (v0.49+) incluem um **Dashboard Web** integrado,
 
 ```powershell
 $env:K6_WEB_DASHBOARD="true"
-k6 run scripts/load.js
+k6 run scripts/workloads/load.js
 ```
 
 **Linux / macOS**
 
 ```bash
-K6_WEB_DASHBOARD=true k6 run scripts/load.js
+K6_WEB_DASHBOARD=true k6 run scripts/workloads/load.js
 ```
 
 Após iniciar a execução, acesse:
@@ -121,7 +121,7 @@ Para cenários mais completos de observabilidade, o k6 pode enviar métricas dir
 Após configurar as credenciais do Grafana Cloud:
 
 ```bash
-k6 cloud scripts/load.js
+k6 cloud scripts/workloads/load.js
 ```
 
 Essa abordagem é recomendada para ambientes de QA, Homologação e Produção.
