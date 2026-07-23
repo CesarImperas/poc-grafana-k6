@@ -1,5 +1,5 @@
 import { check } from 'k6';
-import { get } from '../utils/http.js';
+import { get } from '../../utils/http.js';
 
 export const options = {
   vus: 1,
