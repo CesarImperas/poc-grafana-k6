@@ -220,7 +220,7 @@ Coleta de métricas
 ## Estrutura desta POC
 
 ```text
-k6-poc/
+poc-grafana-k6/
 ├── README.md
 ├── scripts/
 ├── data/
@@ -370,6 +370,7 @@ Nesta POC serão explorados:
 - Variáveis de ambiente
 - Métricas customizadas
 - Scenarios
+- Utilização da biblioteca `browser`
 - Relatórios/Dashboards
 
 ---
@@ -420,26 +421,149 @@ Essa abordagem permite validar primeiro o comportamento funcional da aplicação
 
 ---
 
-## Evoluções futuras
+## Browser Testing (`k6/browser`)
 
-Esta POC tem caráter introdutório e poderá ser expandida futuramente com:
+Além dos testes tradicionais baseados em requisições HTTP, o k6 disponibiliza o módulo **`k6/browser`**, que permite automatizar navegadores reais utilizando uma API inspirada no Playwright.
 
-- Integração com Grafana Cloud;
-- Dashboards personalizados;
-- Exportação de métricas para Prometheus;
-- Relatórios HTML;
-- Execução distribuída;
-- Integração completa com GitHub Actions/GitLab CI;
-- Testes Browser utilizando o módulo `k6/browser`;
-- Execução parametrizada por ambientes (DEV, QA e PROD).
+Esse recurso possibilita validar métricas relacionadas à experiência do usuário (front-end), como tempo de carregamento de páginas, renderização e interações com elementos da interface.
+
+### Quando utilizar
+
+- Medição de Web Vitals; -- Baseado nas métricas do [Core Web Vitals](https://web.dev/explore/learn-core-web-vitals?hl=pt-br)
+- Tempo de carregamento de páginas;
+- Performance do Frontend;
+- Fluxos críticos de navegação;
+- Comparação entre versões da aplicação.
+
+### Quando não utilizar
+
+O módulo `k6/browser` não substitui ferramentas de automação funcional como **Cypress** ou **Playwright**. Seu foco é avaliar o desempenho percebido pelo usuário, e não realizar testes completos de regressão funcional.
+
+### Exemplo
+
+```javascript
+import { browser } from 'k6/browser';
+
+export const options = {
+  scenarios: {
+    browser: {
+      executor: 'shared-iterations',
+      options: {
+        browser: {
+          type: 'chromium',
+        },
+      },
+    },
+  },
+};
+
+export default async function() { // Uso de assincronicidade
+  const page = await browser.newPage();
+
+  await page.goto('https://test.k6.io');
+
+  await page.close();
+}
+```
+
+### Principais métricas
+
+Ao utilizar o módulo `k6/browser`, além das métricas tradicionais de requisições HTTP, o k6 permite coletar indicadores relacionados à experiência do usuário durante a navegação.
+
+#### Core Web Vitals
+
+As **Core Web Vitals** são métricas definidas pelo Google para avaliar a experiência do usuário em aplicações Web.
+
+| Métrica | Descrição |
+|----------|-----------|
+| **LCP (Largest Contentful Paint)** | Tempo necessário para renderizar o maior elemento visível da página. Mede a velocidade de carregamento percebida pelo usuário. |
+| **CLS (Cumulative Layout Shift)** | Mede a estabilidade visual da página, indicando mudanças inesperadas de layout durante o carregamento. Quanto menor, melhor. |
+| **INP (Interaction to Next Paint)** | Mede o tempo de resposta da interface após uma interação do usuário (clique, toque ou teclado), indicando a capacidade de resposta da aplicação. |
+
+> **Observação:** nas versões mais recentes das Core Web Vitals, o **INP (Interaction to Next Paint)** substituiu oficialmente o **FID (First Input Delay)** como principal métrica de responsividade, sendo atualmente a recomendação do Google para avaliar a experiência do usuário.
+
+#### Outras métricas importantes
+
+| Métrica | Descrição |
+|----------|-----------|
+| **FCP (First Contentful Paint)** | Tempo até que o primeiro conteúdo seja renderizado na tela. |
+| **DOMContentLoaded** | Momento em que o HTML foi completamente carregado e processado. |
+| **Load Event** | Indica quando todos os recursos da página (imagens, CSS, scripts etc.) terminaram de carregar. |
+| **TTFB (Time To First Byte)** | Tempo entre o envio da requisição e o recebimento do primeiro byte da resposta do servidor. Mede a responsividade inicial do backend. |
+
+### Benefícios
+
+A utilização do `k6/browser` permite avaliar aspectos que não podem ser medidos apenas por testes baseados em HTTP, como:
+
+- Tempo de carregamento percebido pelo usuário;
+- Performance de renderização do Frontend;
+- Estabilidade visual da interface;
+- Tempo de resposta das interações;
+- Comparação da experiência do usuário entre diferentes versões da aplicação.
+
+Dessa forma, o módulo complementa os testes tradicionais de carga, permitindo analisar tanto o desempenho da infraestrutura quanto a experiência real do usuário durante a navegação.
+
+---
+
+## Executando o k6 em ambientes Cloud
+
+Embora o k6 seja frequentemente utilizado de forma local, ele também pode ser executado em **ambientes de nuvem** utilizando containers Docker.
+
+Essa abordagem facilita sua integração com pipelines de CI/CD e plataformas de infraestrutura como código.
+
+### Exemplo
+
+```bash
+docker run --rm \
+  -v $(pwd):/app \
+  grafana/k6 run /app/scripts/load.js
+```
+
+### Principais cenários de utilização
+
+- AWS EC2;
+- AWS ECS;
+- Kubernetes;
+- GitHub Actions;
+- GitLab CI/CD;
+- Jenkins.
+
+Essa estratégia elimina a necessidade de instalar o k6 diretamente na máquina responsável pela execução, tornando os ambientes mais padronizados e reprodutíveis.
+
+---
+
+## Grafana Cloud
+
+O [**Grafana Cloud**](https://grafana.com/auth/sign-up/create-user?pg=k6-cloud&plcmt=free&cta=create-free-account&redirectPath=k6) permite armazenar e visualizar as métricas geradas pelo k6 de forma centralizada, possibilitando o acompanhamento da evolução da performance da aplicação ao longo do tempo.
+
+Diferentemente do Dashboard Web local, o Grafana Cloud mantém um histórico das execuções e oferece recursos voltados para observabilidade.
+
+### Principais recursos
+
+- Histórico das execuções;
+- Dashboards persistentes;
+- Comparação entre testes;
+- Compartilhamento de dashboards;
+- Alertas e monitoramento;
+- Integração com observabilidade da aplicação.
+
+### Quando utilizar
+
+- Ambientes de QA;
+- Homologação;
+- Produção;
+- Execuções automatizadas em pipelines;
+- Testes recorrentes de performance.
 
 ---
 
 > **Observação**
 >
-> Nesta POC, o foco dos testes de performance será a camada de serviços (APIs), evitando a renderização do navegador. Essa abordagem permite gerar cargas significativamente maiores, isolar gargalos do backend e reduzir o consumo de recursos da máquina executora.
->
 > Os testes E2E continuam sendo responsabilidade do Cypress, enquanto o k6 complementa a estratégia de qualidade validando os requisitos não funcionais da aplicação.
+> 
+> Essa POC tem caréter introdutório, e poderá ser expandida com outros assuntos, tais como:
+> 1. Execução distribuída;
+> 2. Execução parametrizada por ambientes (DEV, QA e PROD). 
 
 ---
 
